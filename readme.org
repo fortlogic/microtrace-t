@@ -1,2 +1,2 @@
-* µtrace-c
+* µtrace-t
   A thing that does stuff.
