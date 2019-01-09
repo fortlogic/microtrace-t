@@ -20,6 +20,8 @@ test : outdir build/tests ; ./build/tests
 # Variables
 #
 
+uname = $(shell uname)
+
 libctrace_c = $(wildcard libctrace/*.c)
 libctrace_o = $(addprefix build/,$(libctrace_c:.c=.o))
 
@@ -28,7 +30,11 @@ libctrace_o = $(addprefix build/,$(libctrace_c:.c=.o))
 #
 
 build/libctrace.a : $(libctrace_o)
+ifeq ($(shell uname),Darwin)
 	libtool -static -o $@ $^
+else
+	libtool --tag=CC --mode link clang -static -o $@ $^
+endif
 
 build/libctrace/%.o: libctrace/%.c
 	clang -c -o $@ $^
