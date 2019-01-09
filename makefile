@@ -2,25 +2,35 @@
 # Symbolic targets
 #
 
-.PHONY : all clean clib examples test
+.PHONY : all clean libctrace test
 
-all : clib examples test
+all : libctrace test
 
-clean :
-	rm -rvf build
+clean : ; rm -rvf build
 
-clib : build/libctrace.a
+libctrace : build/libctrace.a
 
-examples :
+test : build/tests ; ./build/tests
 
-test :
+#
+# Variables
+#
+
+libctrace_c = $(wildcard libctrace/*.c)
+libctrace_o = $(addprefix build/,$(libctrace_c:.c=.o))
 
 #
 # File targets
 #
 
-build :
+build/libctrace.a : $(libctrace_o)
 	mkdir -p build
+	libtool -static -o $@ $^
 
-build/libctrace.a : build
+build/libctrace/%.o: libctrace/%.c
+	mkdir -p build/libctrace
+	clang -c -o $@ $^
 
+build/tests : build
+	mkdir -p build
+	swiftc tests/main.swift -o build/tests
