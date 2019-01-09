@@ -33,4 +33,8 @@ build/libctrace/%.o: libctrace/%.c
 
 build/tests : build
 	mkdir -p build
-	swiftc tests/main.swift -o build/tests
+	swiftc tests/main.swift \
+	       -import-objc-header libctrace/ctrace.h \
+	       -Lbuild \
+	       -lctrace \
+	       -o build/tests
