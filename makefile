@@ -2,15 +2,19 @@
 # Symbolic targets
 #
 
-.PHONY : all clean libctrace test
+.PHONY : all clean libctrace outdir test
 
 all : libctrace test
 
 clean : ; rm -rvf build
 
-libctrace : build/libctrace.a
+libctrace : outdir build/libctrace.a
 
-test : build/tests ; ./build/tests
+outdir :
+	mkdir -p build
+	mkdir -p build/libctrace
+
+test : outdir build/tests ; ./build/tests
 
 #
 # Variables
@@ -24,15 +28,12 @@ libctrace_o = $(addprefix build/,$(libctrace_c:.c=.o))
 #
 
 build/libctrace.a : $(libctrace_o)
-	mkdir -p build
 	libtool -static -o $@ $^
 
 build/libctrace/%.o: libctrace/%.c
-	mkdir -p build/libctrace
 	clang -c -o $@ $^
 
 build/tests : build
-	mkdir -p build
 	swiftc tests/main.swift \
 	       -import-objc-header libctrace/ctrace.h \
 	       -Lbuild \
