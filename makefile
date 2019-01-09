@@ -1,5 +1,5 @@
 #
-# Symbolic targets
+# Phony targets
 #
 
 .PHONY : all clean libctrace outdir test
