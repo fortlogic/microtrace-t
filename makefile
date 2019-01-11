@@ -39,7 +39,7 @@ endif
 build/libctrace/%.o: libctrace/%.c
 	clang -c -o $@ $^
 
-build/tests : build
+build/tests : build libctrace
 	swiftc tests/main.swift \
 	       -import-objc-header libctrace/ctrace.h \
 	       -Lbuild \
