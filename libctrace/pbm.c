@@ -4,12 +4,25 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
 #include "pbm.h"
 
 // This is just for convenience and clarity. You don't have to use it.
-ppm_t ppm_createPPM(float *r, float *g, float *b, unsigned w, unsigned h) {
-  ppm_t p = { r, g, b, w, h };
+ppm_t ppm_createPPM(float *r, float *g, float *b, unsigned w, unsigned h, uint16_t maxval) {
+  ppm_t p = { r, g, b, w, h, maxval };
   return p;
+}
+
+uint16_t ppm_floatToPixel(float f, uint16_t maxval) {
+  return (uint16_t)(f < 0.0f ? 0.0f : (f > 1.0f ? 1.0f*maxval : f*maxval));
+}
+
+void ppm_splitShort(unsigned char* dest, uint16_t s) {
+  unsigned char upper, lower;
+  lower = s & 0xFF;
+  upper = (s >> 8) & 0xFF;
+  dest[0] = upper;
+  dest[1] = lower;
 }
 
 int ppm_exportFile(ppm_t p, const char* filename) {
@@ -22,59 +35,87 @@ int ppm_exportFile(ppm_t p, const char* filename) {
   unsigned widthDigits  = 1 + (unsigned)log10((double)(p.w));
   unsigned heightDigits = 1 + (unsigned)log10((double)(p.h));
 
-  // strlen here will give us the size of a string NOT INCLUDING the null terminator
-  unsigned headerTemplateSize = strlen("P6   255 ");
+  // same thing for the maxval
+  unsigned maxvalDigits = 1 + (unsigned)log10((double)(p.maxval));
+
+  //also get the number of bytes maxval will take (either one or two)
+  unsigned maxvalBytes = p.maxval > 255 ? 2 : 1;
+
+  // strlen here will give us the size of a string NOT INCLUDING the null terminator.
+  // this is the ppm header minus the width, height, and maxval fields
+  unsigned headerTemplateSize = strlen("P6    ");
 
   // add that to the number of digits. This will be the total size of the header
-  unsigned headerTotalSize = headerTemplateSize + widthDigits + heightDigits;
+  unsigned headerTotalSize = headerTemplateSize + widthDigits + heightDigits + maxvalDigits;
 
-  // malloc the size of the header plus the actual width*height of our image,
+  const char* headerString        = "P6 %u %u %u ";  // the default string that headerTemplateSize is based on
+  char* headerStringPointer;
+
+  headerStringPointer = headerString;
+
+
+  // malloc the size of the header plus the actual width*height*maxvalBytes of our image,
   // times three for the three color channels
-
-  /// DON'T FORGET TO FREE THIS! ///
-  unsigned char* ppmData = malloc(sizeof(unsigned char)*(headerTotalSize +
-                                                         p.w*p.h*3));
+  unsigned char* ppmData = malloc(sizeof(unsigned char)*headerTotalSize +
+                                                         maxvalBytes*p.w*p.h*3);
 
   /* This should instert a PPM header of appropriate size at the beginning of the
    * ppmData buffer. sprintf() will append a null terminator. Not a problem though,
    * since it's zero indexed, we should be able to just start writing our image data
    * in at ppmData[headerTotalSize], which will overwrite the null terminator */
-  sprintf(ppmData, "P6 %u %u 255 ", p.w, p.h);
+  sprintf(ppmData, headerStringPointer, p.w, p.h, p.maxval);
 
   /* However, since we're internally using a Cartesian style coordinate system, we need
    * to flip it to the top left indexed PPM format */
   for( unsigned i = 0; i < p.h; ++i ) {
     for( unsigned j = 0; j < p.w; ++j ) {
-      /* If I'm not going crazy, this should make some degree of sense when you think about
-       * it enough. We're taking the planar, bottom left indexed pixel buffers and
-       * translating them to an interleaved, top left indexed version
-       * I look forward to finding out why it segfaults... */
-      ppmData[headerTotalSize + (p.w*(i*3)+(j*3))]   = ppm_floatToByte(p.r[p.w*(p.h-1-i)+j]);
-      ppmData[headerTotalSize + (p.w*(i*3)+(j*3)+1)] = ppm_floatToByte(p.g[p.w*(p.h-1-i)+j]);
-      ppmData[headerTotalSize + (p.w*(i*3)+(j*3)+2)] = ppm_floatToByte(p.b[p.w*(p.h-1-i)+j]);
+      if(maxvalBytes == 1) {
+        ppmData[headerTotalSize +
+                (p.w*(i*3)+
+                 (j*3))]   = (unsigned char)ppm_floatToPixel(p.r[p.w*(p.h-1-i)+j],
+                                                             p.maxval);
+        ppmData[headerTotalSize +
+                (p.w*(i*3)+
+                 (j*3)+1)] = (unsigned char)ppm_floatToPixel(p.g[p.w*(p.h-1-i)+j],
+                                                             p.maxval);
+        ppmData[headerTotalSize +
+                (p.w*(i*3)+
+                 (j*3)+2)] = (unsigned char)ppm_floatToPixel(p.b[p.w*(p.h-1-i)+j],
+                                                             p.maxval);
+      } else {
+        ppm_splitShort(&(ppmData[headerTotalSize +
+                                (p.w*(i*3*maxvalBytes) +
+                                 (j*3*maxvalBytes))]), ppm_floatToPixel(p.r[p.w*(p.h-1-i)+j],
+                                                                        p.maxval));
+        ppm_splitShort(&(ppmData[headerTotalSize +
+                                 (p.w*(i*3*maxvalBytes) +
+                                  (j*3*maxvalBytes)+2)]), ppm_floatToPixel(p.g[p.w*(p.h-1-i)+j],
+                                                                         p.maxval));
+
+        ppm_splitShort(&(ppmData[headerTotalSize +
+                                 (p.w*(i*3*maxvalBytes) +
+                                  (j*3*maxvalBytes)+4)]), ppm_floatToPixel(p.b[p.w*(p.h-1-i)+j],
+                                                                         p.maxval));
+        // I'll make all this stuff readable later 
+
+      }
     }
   }
+
   // We've got things laid out how we need, now just copy it to a file
   FILE* ppmFile = fopen(filename, "w");
   if(ppmFile == NULL) {
     printf("Error opening file for writing\n");
-    free(ppmData); // almost forgot that. that was close...
+    free(ppmData);
     return 0;
   }
-  fwrite(ppmData, sizeof(unsigned char), headerTotalSize + p.w*p.h*3, ppmFile);
+
+  fwrite(ppmData, sizeof(unsigned char), headerTotalSize + p.w*p.h*3*maxvalBytes, ppmFile);
 
   fclose(ppmFile);
-  /// FREEING HERE ///
+
   free(ppmData);
-  /* You know, are we supposed to be returning 1 on success, or is it for failure?
-   * Standard library functions are 0 for success usually, but that doesn't make any intuitive
-   * sense when you're putting it in an if statement. if(!foo()) seems like it should mean
-   * "If foo() fails"... */
-  // Anyway, let's just pray this works
-  return 1;
+
+  return 1; // :)
 }
 
-unsigned char ppm_floatToByte(float f) {
-  // returning a typecast of a nested ternary expression because I'm not okay
-  return (unsigned char)(f < 0.0f ? 0.0f : (f > 1.0f ? 1.0f*255.0f : f*255.0f));
-}
