@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
    * R G B
    * C Y M
    */
-  ppm_t myimage = ppm_createPPM(r, g, b, w, h);
+  ppm_t myimage = ppm_createPPM(r, g, b, w, h, 65535);
   ppm_exportFile(myimage, "myimage.ppm");
   printf("Ending\n");
   return 0;
