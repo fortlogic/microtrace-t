@@ -2,6 +2,8 @@
 #define PBM_H
 
 #include <stdint.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 typedef struct ppm {
   float *r, *g, *b;
@@ -11,6 +13,9 @@ typedef struct ppm {
 
 ppm_t ppm_createPPM(float *r, float *g, float *b, unsigned w, unsigned h, uint16_t maxval);
 
-int ppm_exportFile(ppm_t p, const char* filename);
+void ppm_writeFile(ppm_t p, const char* filename);
+
+void ppm_writeHandle(ppm_t p, FILE* file);
 
 #endif
+
