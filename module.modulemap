@@ -1,0 +1,5 @@
+module CTrace { 
+   header "libctrace/ctrace.h"
+   link "ctrace"
+   export * 
+}
