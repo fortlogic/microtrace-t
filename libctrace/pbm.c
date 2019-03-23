@@ -5,7 +5,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+#include <limits.h>
+#include <assert.h>
 #include "pbm.h"
+
 
 // This is just for convenience and clarity. You don't have to use it.
 ppm_t ppm_createPPM(float *r, float *g, float *b, unsigned w, unsigned h, uint16_t maxval) {
@@ -13,10 +16,8 @@ ppm_t ppm_createPPM(float *r, float *g, float *b, unsigned w, unsigned h, uint16
   return p;
 }
 
-uint16_t ppm_floatToPixel(float f, uint16_t maxval) {
-  return (uint16_t)(f < 0.0f ? 0.0f : (f > 1.0f ? 1.0f*maxval : f*maxval));
-}
-
+// Takes a pointer dest and a short s. Splits the short into two bytes and
+// puts them into the buffer pointed to by dest, big end first
 void ppm_splitShort(unsigned char* dest, uint16_t s) {
   unsigned char upper, lower;
   lower = s & 0xFF;
@@ -25,97 +26,63 @@ void ppm_splitShort(unsigned char* dest, uint16_t s) {
   dest[1] = lower;
 }
 
-int ppm_exportFile(ppm_t p, const char* filename) {
+void ppm_writeHandle(ppm_t p, FILE* file) {
 
-  /* The ppm header requires width and height to be in decimal/ascii,
-   * ergo we need to know the number of digits (decimal places) they'll take up.
-   * Rather than assume nobody wants an image that goes above some arbirary
-   * range of decimal places we deem to be 'enough' we'll do it the proper way.
-   * Yay! */
-  unsigned widthDigits  = 1 + (unsigned)log10((double)(p.w));
-  unsigned heightDigits = 1 + (unsigned)log10((double)(p.h));
+  // NO DYNAMICALLY ALLOCATED MEMORY, TIM
+  assert( UINT_MAX/(p.w) >= (p.h) );
 
-  // same thing for the maxval
-  unsigned maxvalDigits = 1 + (unsigned)log10((double)(p.maxval));
+  const char* magicNum = "P6"; // magic number for the type of pbm file we use
+  int maxvalBytes;             // either 1 or 2
 
-  //also get the number of bytes maxval will take (either one or two)
-  unsigned maxvalBytes = p.maxval > 255 ? 2 : 1;
+  // File header
+  fprintf(file, "%s %u %u %u ", magicNum, p.w, p.h, p.maxval);
 
-  // strlen here will give us the size of a string NOT INCLUDING the null terminator.
-  // this is the ppm header minus the width, height, and maxval fields
-  unsigned headerTemplateSize = strlen("P6    ");
+  // How many bytes for maxval?
+  if(p.maxval > 255)
+    maxvalBytes = 2;
+  else
+    maxvalBytes = 1;
 
-  // add that to the number of digits. This will be the total size of the header
-  unsigned headerTotalSize = headerTemplateSize + widthDigits + heightDigits + maxvalDigits;
+  // A tiny buffer to store an rgb value. if maxvalByte < 2, only the first 3 elements will be used
+  unsigned char tinyBuffer[6];
 
-  const char* headerString        = "P6 %u %u %u ";  // the default string that headerTemplateSize is based on
-  char* headerStringPointer;
+  for(unsigned i = 0; i < p.h; ++i) {
 
-  headerStringPointer = headerString;
+    for(unsigned j = 0; j < p.w; ++j) {
 
+      unsigned index = (p.w * (p.h-1)) - (i * p.w) + j;
 
-  // malloc the size of the header plus the actual width*height*maxvalBytes of our image,
-  // times three for the three color channels
-  unsigned char* ppmData = malloc(sizeof(unsigned char)*headerTotalSize +
-                                                         maxvalBytes*p.w*p.h*3);
+      float r = p.r[index];
+      float g = p.g[index];
+      float b = p.b[index];
 
-  /* This should instert a PPM header of appropriate size at the beginning of the
-   * ppmData buffer. sprintf() will append a null terminator. Not a problem though,
-   * since it's zero indexed, we should be able to just start writing our image data
-   * in at ppmData[headerTotalSize], which will overwrite the null terminator */
-  sprintf(ppmData, headerStringPointer, p.w, p.h, p.maxval);
-
-  /* However, since we're internally using a Cartesian style coordinate system, we need
-   * to flip it to the top left indexed PPM format */
-  for( unsigned i = 0; i < p.h; ++i ) {
-    for( unsigned j = 0; j < p.w; ++j ) {
+      // Populate the tiny buffer
       if(maxvalBytes == 1) {
-        ppmData[headerTotalSize +
-                (p.w*(i*3)+
-                 (j*3))]   = (unsigned char)ppm_floatToPixel(p.r[p.w*(p.h-1-i)+j],
-                                                             p.maxval);
-        ppmData[headerTotalSize +
-                (p.w*(i*3)+
-                 (j*3)+1)] = (unsigned char)ppm_floatToPixel(p.g[p.w*(p.h-1-i)+j],
-                                                             p.maxval);
-        ppmData[headerTotalSize +
-                (p.w*(i*3)+
-                 (j*3)+2)] = (unsigned char)ppm_floatToPixel(p.b[p.w*(p.h-1-i)+j],
-                                                             p.maxval);
+        tinyBuffer[0] = (unsigned char) (((float)p.maxval) * r);
+        tinyBuffer[1] = (unsigned char) (((float)p.maxval) * g);
+        tinyBuffer[2] = (unsigned char) (((float)p.maxval) * b);
       } else {
-        ppm_splitShort(&(ppmData[headerTotalSize +
-                                (p.w*(i*3*maxvalBytes) +
-                                 (j*3*maxvalBytes))]), ppm_floatToPixel(p.r[p.w*(p.h-1-i)+j],
-                                                                        p.maxval));
-        ppm_splitShort(&(ppmData[headerTotalSize +
-                                 (p.w*(i*3*maxvalBytes) +
-                                  (j*3*maxvalBytes)+2)]), ppm_floatToPixel(p.g[p.w*(p.h-1-i)+j],
-                                                                         p.maxval));
-
-        ppm_splitShort(&(ppmData[headerTotalSize +
-                                 (p.w*(i*3*maxvalBytes) +
-                                  (j*3*maxvalBytes)+4)]), ppm_floatToPixel(p.b[p.w*(p.h-1-i)+j],
-                                                                         p.maxval));
-        // I'll make all this stuff readable later 
-
+        // this means we need to get a 2 byte value in there.
+        // ppm format has the most significant byte first.
+        // ppm_splitShort handles what we need.
+        ppm_splitShort(&(tinyBuffer[0]), (uint16_t) (((float)p.maxval) * r));
+        ppm_splitShort(&(tinyBuffer[2]), (uint16_t) (((float)p.maxval) * g));
+        ppm_splitShort(&(tinyBuffer[4]), (uint16_t) (((float)p.maxval) * b));
       }
+
+      fwrite(tinyBuffer, maxvalBytes, 3, file); // Good
+
     }
   }
+}
 
-  // We've got things laid out how we need, now just copy it to a file
-  FILE* ppmFile = fopen(filename, "w");
-  if(ppmFile == NULL) {
-    printf("Error opening file for writing\n");
-    free(ppmData);
-    return 0;
-  }
+void ppm_writeFile(ppm_t p, const char* filename) {
+  FILE* file = fopen(filename, "wx");
 
-  fwrite(ppmData, sizeof(unsigned char), headerTotalSize + p.w*p.h*3*maxvalBytes, ppmFile);
+  assert(file != NULL); // ERROR: File already exists
 
-  fclose(ppmFile);
+  ppm_writeHandle(p, file);
 
-  free(ppmData);
-
-  return 1; // :)
+  fclose(file);
 }
 
