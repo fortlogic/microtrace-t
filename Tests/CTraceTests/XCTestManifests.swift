@@ -1,15 +1,15 @@
 import XCTest
 
-extension CTraceTTests {
+extension Vector2Tests {
     static let __allTests = [
-        ("testExample", testExample),
+        ("test_test", test_test),
     ]
 }
 
 #if !os(macOS)
 public func __allTests() -> [XCTestCaseEntry] {
     return [
-        testCase(CTraceTTests.__allTests),
+        testCase(Vector2Tests.__allTests),
     ]
 }
 #endif
