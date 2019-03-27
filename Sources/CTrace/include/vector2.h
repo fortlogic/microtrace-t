@@ -10,9 +10,9 @@ typedef struct vector2 {
 /// Interesting Vectors
 ///
 
-const vector2_t zero2;
-const vector2_t unit2_u;
-const vector2_t unit2_v;
+const vector2_t vec2_zero;
+const vector2_t vec2_unit_u;
+const vector2_t vec2_unit_v;
 
 ///
 /// Unary Operations

@@ -2,9 +2,9 @@
 #include <math.h>
 #include <stdarg.h>
 
-const vector2_t zero2 = {0.0, 0.0};
-const vector2_t unit2_u = {1.0, 0.0};
-const vector2_t unit2_v = {0.0, 1.0};
+const vector2_t vec2_zero = {0.0, 0.0};
+const vector2_t vec2_unit_u = {1.0, 0.0};
+const vector2_t vec2_unit_v = {0.0, 1.0};
 
 float vec2_length(vector2_t vec) {
   return sqrtf(vec2_dot(vec, vec));
@@ -48,7 +48,7 @@ vector2_t vec2_subtract(vector2_t vec1, vector2_t vec2) {
 vector2_t vec2_addn(unsigned int count, ...) {
   va_list stupid_c_thing;
   va_start(stupid_c_thing, count);
-  vector2_t sum = zero2;
+  vector2_t sum = vec2_zero;
 
   for(unsigned int i = 0; i < count; ++i) {
     vector2_t vec = va_arg(stupid_c_thing, vector2_t);
