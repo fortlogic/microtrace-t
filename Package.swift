@@ -23,7 +23,7 @@ let package = Package(
       dependencies: []),
     .testTarget(
       name: "µtraceTTests",
-      dependencies: ["µtraceT"]),
+      dependencies: ["µtraceT"]
     .target(
       name: "CTrace"
     )
