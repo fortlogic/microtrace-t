@@ -1,6 +1,6 @@
 import XCTest
 
-extension µtraceTTests {
+extension CTraceTTests {
     static let __allTests = [
         ("testExample", testExample),
     ]
@@ -9,7 +9,7 @@ extension µtraceTTests {
 #if !os(macOS)
 public func __allTests() -> [XCTestCaseEntry] {
     return [
-        testCase(µtraceTTests.__allTests),
+        testCase(CTraceTTests.__allTests),
     ]
 }
 #endif
