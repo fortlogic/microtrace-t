@@ -1,17 +1,23 @@
-#include "vector2.h"
 #include <math.h>
 #include <stdarg.h>
+
+#include "vector2.h"
 
 const vector2_t vec2_zero = {0.0, 0.0};
 const vector2_t vec2_unit_u = {1.0, 0.0};
 const vector2_t vec2_unit_v = {0.0, 1.0};
 
-float vec2_length(vector2_t vec) {
+vector2_t vec2_make(float u, float v) {
+  vector2_t vec = {u, v};
+  return vec;
+}
+
+float vec2_magnitude(vector2_t vec) {
   return sqrtf(vec2_dot(vec, vec));
 }
 
 vector2_t vec2_normalize(vector2_t vec) {
-  vector2_t norm = vec2_scale(1.0 / vec2_length(vec), vec);
+  vector2_t norm = vec2_scale(1.0 / vec2_magnitude(vec), vec);
   return norm;
 }
 
@@ -31,7 +37,7 @@ float vec2_dot(vector2_t vec1, vector2_t vec2) {
 }
 
 float vec2_distance(vector2_t vec1, vector2_t vec2) {
-  float dist = fabsf(vec2_length(vec2_subtract(vec1, vec2)));
+  float dist = fabsf(vec2_magnitude(vec2_subtract(vec1, vec2)));
   return dist;
 }
 

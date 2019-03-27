@@ -15,10 +15,16 @@ const vector2_t vec2_unit_u;
 const vector2_t vec2_unit_v;
 
 ///
+/// Vector Construction
+///
+
+vector2_t vec2_make(float u, float v);
+
+///
 /// Unary Operations
 ///
 
-float vec2_length(vector2_t vec);
+float vec2_magnitude(vector2_t vec);
 
 vector2_t vec2_normalize(vector2_t vec);
 
