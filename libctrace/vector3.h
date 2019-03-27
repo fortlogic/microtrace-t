@@ -20,7 +20,7 @@ const vector3_t unit3_k;
 /// Unary Operations
 ///
 
-float vec2_length(vector3_t vec);
+float vec3_length(vector3_t vec);
 
 vector3_t vec3_normalize(vector3_t vec);
 
