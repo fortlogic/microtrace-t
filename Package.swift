@@ -24,6 +24,7 @@ let package = Package(
     .testTarget(
       name: "µtraceTTests",
       dependencies: ["µtraceT"]
+    ),
     .target(
       name: "CTrace"
     )
