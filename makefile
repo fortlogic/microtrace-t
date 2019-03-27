@@ -2,17 +2,17 @@
 # Phony targets
 #
 
-.PHONY : all clean libctrace outdir test
+.PHONY : all clean ctrace outdir test
 
-all : libctrace test
+all : ctrace test
 
 clean : ; rm -rvf build
 
-libctrace : outdir build/libctrace.a
+ctrace : outdir build/libctrace.a
 
 outdir :
 	mkdir -p build
-	mkdir -p build/libctrace
+	mkdir -p build/CTrace
 
 test : outdir build/tests ; ./build/tests
 
@@ -22,26 +22,26 @@ test : outdir build/tests ; ./build/tests
 
 uname = $(shell uname)
 
-libctrace_c = $(wildcard libctrace/*.c)
-libctrace_o = $(addprefix build/,$(libctrace_c:.c=.o))
+ctrace_c = $(wildcard CTrace/*.c)
+ctrace_o = $(addprefix build/,$(ctrace_c:.c=.o))
 
 #
 # File targets
 #
 
-build/libctrace.a : $(libctrace_o)
+build/libctrace.a : $(ctrace_o)
 ifeq ($(shell uname),Darwin)
 	libtool -static -o $@ $^
 else
 	libtool --tag=CC --mode link clang -static -o $@ $^
 endif
 
-build/libctrace/%.o: libctrace/%.c
+build/CTrace/%.o: CTrace/%.c
 	clang -c -o $@ $^
 
-build/tests : build libctrace
+build/tests : build ctrace
 	swiftc tests/main.swift \
-	       -import-objc-header libctrace/ctrace.h \
+	       -import-objc-header CTrace/ctrace.h \
 	       -Lbuild \
 	       -lctrace \
 	       -o build/tests
