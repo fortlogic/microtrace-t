@@ -1,3 +1,3 @@
-struct MicroTraceT {
+struct µtraceT {
     var text = "Hello, World!"
 }

@@ -1,7 +1,7 @@
 import XCTest
 
-import MicroTraceTTests
+import µtraceTTests
 
 var tests = [XCTestCaseEntry]()
-tests += MicroTraceTTests.allTests()
+tests += µtraceTTests.allTests()
 XCTMain(tests)
