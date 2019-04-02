@@ -50,34 +50,55 @@ class Vector3Tests: XCTestCase {
 
   func test_magnitude() {
     XCTAssertEqual(vec3_magnitude(vec3_zero), 0.0, "length of zero is zero")
-    XCTFail("length of unit_i")
-    XCTFail("length of unit_j")
-    XCTFail("length of unit_k")
+    XCTAssertEqual(vec3_magnitude(vec3_unit_i), 1.0, "length of i-hat is one")
+    XCTAssertEqual(vec3_magnitude(vec3_unit_j), 1.0, "length of j-hat is one")
+    XCTAssertEqual(vec3_magnitude(vec3_unit_k), 1.0, "length of k-hat is one")
+
     XCTFail("length obeys the triangle property")
     XCTFail("Pythagorean triples behave nicely")
   }
 
   func test_normalize() {
-    XCTFail("zero vector is <nan,nan>")
-    XCTFail("basis unit vector i normalise to themselves")
-    XCTFail("basis unit vector j normalise to themselves")
-    XCTFail("basis unit vector k normalise to themselves")
+    XCTAssertTrue(vec3_normalize(vec3_zero).i.isNaN, "zero shouldn't normalize (i)")
+    XCTAssertTrue(vec3_normalize(vec3_zero).j.isNaN, "zero shouldn't normalize (j)")
+    XCTAssertTrue(vec3_normalize(vec3_zero).k.isNaN, "zero shouldn't normalize (k)")
+
+    XCTAssertEqual(vec3_normalize(vec3_unit_i), vec3_unit_i, "i-hat normalizes to itself")
+    XCTAssertEqual(vec3_normalize(vec3_unit_j), vec3_unit_j, "i-hat normalizes to itself")
+    XCTAssertEqual(vec3_normalize(vec3_unit_k), vec3_unit_k, "i-hat normalizes to itself")
+
     XCTFail("vec and vec.normalised are in the same direction")
     XCTFail("the result of a normalised vector has length one")
   }
 
   func test_negate() {
-    XCTFail("negate zero is zero")
-    XCTFail("negate basis i")
-    XCTFail("negate basis j")
-    XCTFail("negate basis k")
+    XCTAssertEqual(vec3_negate(vec3_zero), vec3_zero, "negative zero is zero")
+    XCTAssertEqual(vec3_negate(vec3_unit_i),
+                   vec3_make(-1.0, 0.0, 0.0), "negative i-hat")
+    XCTAssertEqual(vec3_negate(vec3_unit_j),
+                   vec3_make(0.0, -1.0, 0.0), "negative j-hat")
+    XCTAssertEqual(vec3_negate(vec3_unit_k),
+                   vec3_make(0.0, 0.0, -1.0), "negative k-hat")
+
+    property("double negation is an identity") <- forAll {
+      (vec: vector3) in
+      return vec == vec3_negate(vec3_negate(vec))
+    }
+
     XCTFail("negate reverses coordinates")
-    XCTFail("double negation is identity")
   }
 
   func test_scale() {
-    XCTFail("scaling zero is zero")
-    XCTFail("scaling by zero is zero")
+    property("scaling zero is zero") <- forAll {
+      (s: Float) in
+      return vec3_scale(s, vec3_zero) == vec3_zero
+    }
+
+    property("scaling by zero is zero") <- forAll {
+      (vec: vector3) in
+      return vec3_scale(0.0, vec) == vec3_zero
+    }
+
     XCTFail("scaling basis i")
     XCTFail("scaling basis j")
     XCTFail("scaling basis k")
@@ -108,7 +129,12 @@ class Vector3Tests: XCTestCase {
 
   func test_add() {
     XCTFail("zero is additive identity")
-    XCTFail("addition commutes")
+
+    property("addition commutes") <- forAll {
+      (vec1: vector3, vec2: vector3) in
+      return vec3_add(vec1, vec2) == vec3_add(vec2, vec1)
+    }
+
     XCTFail("coordinates get added")
   }
 
@@ -133,4 +159,25 @@ class Vector3Tests: XCTestCase {
 
 extension vector3 {
   
+}
+
+extension vector3: Arbitrary, CustomStringConvertible, Equatable {
+  public static var arbitrary: Gen<vector3> {
+    return Gen.zip(vector2.arbitrary, Float.arbitrary).map {
+      (vec2, k) in
+      var vec: vector3 = vec3_zero
+      vec.i = vec2.u
+      vec.j = vec2.v
+      vec.k = k
+      return vec
+    }
+  }
+
+  public var description: String {
+    return "<\(i), \(j), \(k)>"
+  }
+
+  public static func ==(lhs: vector3, rhs: vector3) -> Bool {
+    return (lhs.i == rhs.i) && (lhs.j == rhs.j) && (lhs.k == rhs.k)
+  }
 }
