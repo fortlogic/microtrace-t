@@ -5,22 +5,28 @@ typedef struct vector3 {
   float i;
   float j;
   float k;
-}vector3_t;
+} vector3_t;
 
 ///
 /// Interesting Vectors
 ///
 
-const vector3_t zero3;
-const vector3_t unit3_i;
-const vector3_t unit3_j;
-const vector3_t unit3_k;
+const vector3_t vec3_zero;
+const vector3_t vec3_unit_i;
+const vector3_t vec3_unit_j;
+const vector3_t vec3_unit_k;
+
+///
+/// Vector Construction
+///
+
+vector3_t vec3_make(float i, float j, float k);
 
 ///
 /// Unary Operations
 ///
 
-float vec3_length(vector3_t vec);
+float vec3_magnitude(vector3_t vec);
 
 vector3_t vec3_normalize(vector3_t vec);
 
