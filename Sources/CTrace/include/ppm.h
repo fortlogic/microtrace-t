@@ -1,5 +1,5 @@
-#ifndef PBM_H
-#define PBM_H
+#ifndef PPM_H
+#define PPM_H
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -11,7 +11,7 @@ typedef struct ppm {
   uint16_t maxval;
 }ppm_t;
 
-ppm_t ppm_createPPM(float *r, float *g, float *b, unsigned w, unsigned h, uint16_t maxval);
+ppm_t ppm_make(float *r, float *g, float *b, unsigned w, unsigned h, uint16_t maxval);
 
 void ppm_writeFile(ppm_t p, const char* filename);
 

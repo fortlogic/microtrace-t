@@ -1,5 +1,3 @@
-/// Functions for PBM files ///
-
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
@@ -7,11 +5,12 @@
 #include <stdint.h>
 #include <limits.h>
 #include <assert.h>
-#include "pbm.h"
+
+#include "ppm.h"
 
 
 // This is just for convenience and clarity. You don't have to use it.
-ppm_t ppm_createPPM(float *r, float *g, float *b, unsigned w, unsigned h, uint16_t maxval) {
+ppm_t ppm_make(float *r, float *g, float *b, unsigned w, unsigned h, uint16_t maxval) {
   ppm_t p = { r, g, b, w, h, maxval };
   return p;
 }
