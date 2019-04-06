@@ -16,7 +16,7 @@ vector2_t vec2_normalize(vector2_t vec) {
 }
 
 vector2_t vec2_negate(vector2_t vec) {
-  vector2_t opposite = {-vec.v, -vec.u};
+  vector2_t opposite = {-vec.u, -vec.v};
   return opposite;
 }
 
