@@ -27,3 +27,15 @@ xform2_t xform2_translate(xform2_t f, float du, float dv) {
   f.offset.v += dv;
   return f;
 }
+
+xform2_t xform2_rotate(xform2_t f, float theta) {
+  return identity2;
+}
+
+xform2_t xform2_compose(xform2_t f, xform2_t g) {
+  return identity2;
+}
+
+vector2_t xform2_project(xform2_t f, vector2_t vec) {
+  return vec;
+}
